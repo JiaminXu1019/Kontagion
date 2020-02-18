@@ -15,6 +15,13 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
+    double getSocratesX() const;
+    double getSocratesY() const;
+    void damageSocrates(int x);
+    void restoreHealth();
+    void addFlames();
+
+
     void addNewActor(Actor* actor);
     ~StudentWorld();
     
@@ -28,6 +35,7 @@ private:
     int m_bacteria;
     int m_actors;
     Socrates* m_Socrates;
+    int bacteriaKilled;
 };
 
 #endif // STUDENTWORLD_H_
