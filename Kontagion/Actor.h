@@ -253,9 +253,12 @@ class Salmonella: public Bacteria
 };
 
 
-class AggroSalmonella: public Salmonella
+class AggroSalmonella: public Bacteria
 {
     public:
+        AggroSalmonella(StudentWorld* studentWorld, double x, double y);
+           virtual void doSomething();
+           virtual ~AggroSalmonella();
         
     private:
 

@@ -6,9 +6,11 @@
 using namespace std;
 #include "Actor.h"
 #include <iostream> // defines the overloads of the << operator
-#include <sstream>  // defines the type std::ostringstream
+#include <sstream>
+#include <cmath>
+#include <math.h>
+#include <stdio.h> // defines the type std::ostringstream
 #include <iomanip>
-
 
 
 GameWorld* createStudentWorld(string assetPath)
@@ -174,7 +176,8 @@ int StudentWorld::move()
           playSound(SOUND_FINISHED_LEVEL);
           return GWSTATUS_FINISHED_LEVEL;
       }
-    */
+     */
+    
     vector<Actor*>::iterator it1; //deletes memory of dead actors
     it1 = actors.begin();
     while (it1 != actors.end())
@@ -384,6 +387,16 @@ void StudentWorld::damageSocrates(int x)
     }
 }
 
+void StudentWorld::increaseBacteriaKilled()
+{
+    bacteriaKilled++;
+}
+
+void StudentWorld::addBacteria(int x)
+{
+    m_bacteria += x;
+}
+
 /*void StudentWorld::damageBacteria(int x, Bacteria* bacteria)
 {
     bacteria->changeHealth(-x);
@@ -423,9 +436,29 @@ int StudentWorld::typeOfSprayHit(Actor* actor)
               return 1;
           }
           
-          else if ((*it)->isHitable() && ((*it)->hasHP()) && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
+          else if ((*it)->isAlive() && (*it)->isHitable() && ((*it)->hasHP()) && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
           {
+              int x =   (*it)->getX();
+            int y =   (*it)->getY();
               (*it)->changeHealth(-2);
+
+              if(!((*it)->isAlive()))
+              {
+                  increaseBacteriaKilled();
+                  playSound(SOUND_SALMONELLA_DIE);
+                  increaseScore(100);
+
+                  int z = randInt(1, 2);
+                  if(z == 1)
+                  {
+                      addNewActor(new Food(this, x, y));
+                  }
+              }
+              else
+              {
+                  playSound(SOUND_SALMONELLA_HURT);
+              }
+
               return 2;
           }
           
@@ -452,9 +485,30 @@ int StudentWorld::typeOfFlameHit(Actor* actor)
           }
           
           // if bacteria
-          else if ((*it)->isHitable() && ((*it)->hasHP()) && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
+          else if ((*it)->isAlive() && (*it)->isHitable() && ((*it)->hasHP()) && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
           {
+              int x =   (*it)->getX();
+              int y =   (*it)->getY();
               (*it)->changeHealth(-5);
+              
+              if(!((*it)->isAlive()))
+               {
+                   increaseBacteriaKilled();
+                   playSound(SOUND_SALMONELLA_DIE);
+                   increaseScore(100);
+
+                   int z = randInt(1, 2);
+                   if(z==1)
+                   {
+                       addNewActor(new Food(this, x, y));
+                   }
+               }
+               
+               else
+               {
+                   playSound(SOUND_SALMONELLA_HURT);
+               }
+              
               return 2;
           }
           
@@ -474,7 +528,7 @@ bool StudentWorld::overlapsFood(Actor *actor)
     vector<Actor*>::iterator it;
     it = actors.begin();
     while (it!= actors.end())
-    {//if dirt, goodies, etc...
+    {//if food
         if(!((*it)->isHitable()) && (*it)->getDirection() == 90 && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
         {
             (*it)->setAlive(false);
@@ -485,6 +539,123 @@ bool StudentWorld::overlapsFood(Actor *actor)
     }
     return false;
 }
+
+
+bool StudentWorld::isMovementBlocked(Actor *actor)
+{
+
+    for(int i = 1; i < 4; i ++)
+    {
+        double x;
+          double y;
+          actor->getPositionInThisDirection(actor->getDirection(), i, x, y);
+        if(euclidean(x, VIEW_WIDTH/2, y, VIEW_HEIGHT/2) >= VIEW_RADIUS)
+               {
+                   return true;
+               }
+    }
+    
+    for(int i = 1; i < 4; i ++)
+      {
+           double x;
+            double y;
+          actor->getPositionInThisDirection(actor->getDirection(), i, x, y);
+        vector<Actor*>::iterator it;
+        it = actors.begin();
+        while (it!= actors.end())
+        {
+            //if its dirt in the way
+            if(((*it)->isHitable()) && (*it)->getDirection() == 0 && euclidean(x, (*it)->getX(), y, (*it)->getY()) <= SPRITE_RADIUS/2)
+            {
+                return true;
+                
+            }
+                it++;
+        }
+    }
+    return false;
+}
+
+bool StudentWorld::isMovementBlockedByDirt(Actor *actor)
+{
+    
+    for(int i = 1; i < 4; i ++)
+      {
+           double x;
+            double y;
+          actor->getPositionInThisDirection(actor->getDirection(), i, x, y);
+        vector<Actor*>::iterator it;
+        it = actors.begin();
+        while (it!= actors.end())
+        {
+            //if its dirt in the way
+            if(((*it)->isHitable()) && (*it)->getDirection() == 0 && euclidean(x, (*it)->getX(), y, (*it)->getY()) <= SPRITE_RADIUS/2)
+            {
+                return true;
+                
+            }
+                it++;
+        }
+    }
+    return false;
+}
+
+bool StudentWorld::isMovementBlockedByCircle(Actor *actor)
+{
+
+    for(int i = 1; i < 4; i ++)
+    {
+        double x;
+          double y;
+          actor->getPositionInThisDirection(actor->getDirection(), i, x, y);
+        if(euclidean(x, VIEW_WIDTH/2, y, VIEW_HEIGHT/2) >= VIEW_RADIUS)
+               {
+                   return true;
+               }
+    }
+    
+    return false;
+}
+
+bool StudentWorld::isNearbyFood(Actor *actor)
+{
+    const double PI = 4 * atan(1);
+
+    vector<Actor*>::iterator it;
+    it = actors.begin();
+    while (it!= actors.end())
+    {//if food within 128 pixels
+        if(!((*it)->isHitable()) && (*it)->getDirection() == 90 && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 128)
+        {
+            //sets the new direction of the bacteria to chase the food
+            //TODO: ADJUST ARCSIN new direction
+            actor->setDirection(int(0.5 + (180/PI) * atan2((*it)->getY() - actor->getY(), (*it)->getX() - actor->getX())));
+            return true;
+        }
+        it++;
+    }
+    return false;
+}
+
+
+bool StudentWorld::isNearbySocrates(Actor *actor)
+{
+ const double PI = 4 * atan(1);
+
+    //if Socrates within 72 pixels
+    //TODO: ADJUST ARCSIN new direction
+
+        if(euclidean(actor->getX(), getSocratesY(), actor->getY(), getSocratesX()) <= 72)
+        {
+            //sets the new direction of the bacteria to chase Socrates
+              actor->setDirection(int(0.5 + (180/PI) * atan2(getSocratesY() - actor->getY(), getSocratesX() - actor->getX())));
+        }
+    
+    return false;
+}
+
+
+
 
 
  

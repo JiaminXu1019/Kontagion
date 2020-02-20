@@ -21,10 +21,20 @@ public:
     void damageSocrates(int x);
     void restoreHealth();
     void addFlames();
-    void damageBacteria(int x, Bacteria* bacteria);
+    void increaseBacteriaKilled();
+    void addBacteria(int x);
     int typeOfSprayHit(Actor* actor);
     int typeOfFlameHit(Actor* actor);
     bool overlapsFood(Actor* actor);
+    bool isMovementBlocked(Actor* actor);
+    bool isMovementBlockedByDirt(Actor* actor);
+    bool isMovementBlockedByCircle(Actor* actor);
+
+
+    bool isNearbyFood(Actor* actor);
+    bool isNearbySocrates(Actor* actor);
+
+
 
 
     void addNewActor(Actor* actor);

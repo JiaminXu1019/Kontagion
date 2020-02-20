@@ -3,8 +3,6 @@
 #include "StudentWorld.h"
 #include "GameConstants.h"
 #include <cmath>
-#include <iostream>
-
 
 
 Actor::Actor(int imageID, double x, double y, int direction, int depth, StudentWorld* studentWorld, bool hitable):
@@ -308,44 +306,125 @@ void Pit::doSomething()
 {
     if(isEmpty())
     {
+        //getWorld()->addBacteria(10);
         setAlive(false);
     }
     
    int x = randInt(1, 50); //randomly spawns a bacterium; 1/50 chance per tick
     if(x == 25)
     {
-        int y = 0;
+        int a = 0;  //checks which types of bacteria are available to spawn and randomly does so among the possible ones to spawn
+        int b = 0;
+        int c = 0;
+
         if(m_e_coli > 0)
         {
-            y++;
+            a++;
         }
+        if(m_salmonella > 0)
+       {
+           b++;
+       }
         if(m_aggro_salmonella > 0)
           {
-              y++;
+              c++;
           }
-        if(m_salmonella > 0)
-          {
-              y++;
-          }
-        
-        if(randInt(1, y) == 1) //randomly spawns a bacterium among those that exist
+        if(a >0 && b > 0 && c > 0)
         {
-            //TODO: getWorld()->addNewActor(ECOLI)
-            getWorld()->playSound(SOUND_BACTERIUM_BORN);
-            decrECOLI();
+            if(randInt(1, 3) == 1) //randomly spawns a bacterium among those that exist
+            {
+                //TODO: getWorld()->addNewActor(ECOLI)
+                getWorld()->playSound(SOUND_BACTERIUM_BORN);
+                decrECOLI();
+            }
+            
+            else if(randInt(1, 3) == 2)
+                 {
+                     getWorld()->addNewActor(new Salmonella(getWorld(), getX(), getY()));
+                     getWorld()->playSound(SOUND_BACTERIUM_BORN);
+                     decrSalmonella();
+                 }
+            
+            else if(randInt(1, 3) == 3)
+                 {
+                     getWorld()->addNewActor(new AggroSalmonella(getWorld(), getX(),getY()));
+                     getWorld()->playSound(SOUND_BACTERIUM_BORN);
+                     decrAggroSalmonella();
+                 }
         }
-        else if(randInt(1, y) == 2)
-             {
-                //TODO: getWorld()->addNewActor()
-                 getWorld()->playSound(SOUND_BACTERIUM_BORN);
-                 decrSalmonella();
-             }
-        else if(randInt(1, y) == 3)
-             {
-                 //TODO: getWorld()->addNewActor()
-                 getWorld()->playSound(SOUND_BACTERIUM_BORN);
-                 decrAggroSalmonella();
-             }
+        
+        else if(a > 0 && b > 0)
+        {
+            if(randInt(1, 2) == 1) //randomly spawns a bacterium among those that exist
+            {
+                //TODO: getWorld()->addNewActor(ECOLI)
+                getWorld()->playSound(SOUND_BACTERIUM_BORN);
+                decrECOLI();
+            }
+            
+            else if(randInt(1, 2) == 2)
+                 {
+                     getWorld()->addNewActor(new Salmonella(getWorld(), getX(), getY()));
+                     getWorld()->playSound(SOUND_BACTERIUM_BORN);
+                     decrSalmonella();
+                 }
+        }
+            
+        else if(a>0 && c > 0)
+        {
+            if(randInt(1, 2) == 1) //randomly spawns a bacterium among those that exist
+               {
+                   //TODO: getWorld()->addNewActor(ECOLI)
+                   getWorld()->playSound(SOUND_BACTERIUM_BORN);
+                   decrECOLI();
+               }
+               
+               else if(randInt(1, 2) == 2)
+                    {
+                        getWorld()->addNewActor(new AggroSalmonella(getWorld(), getX(),getY()));
+                        getWorld()->playSound(SOUND_BACTERIUM_BORN);
+                        decrAggroSalmonella();
+                    }
+        }
+            
+        else if(b>0 && c > 0)
+        {
+            if(randInt(1, 2) == 1) //randomly spawns a bacterium among those that exist
+                       {
+                            getWorld()->addNewActor(new Salmonella(getWorld(), getX(), getY()));
+                            getWorld()->playSound(SOUND_BACTERIUM_BORN);
+                            decrSalmonella();
+                       }
+                       
+           else if(randInt(1, 2) == 2)
+                {
+                    getWorld()->addNewActor(new AggroSalmonella(getWorld(), getX(),getY()));
+                    getWorld()->playSound(SOUND_BACTERIUM_BORN);
+                    decrAggroSalmonella();
+                }
+        }
+            
+        else if(a>0)
+        {
+        //TODO: getWorld()->addNewActor(ECOLI)
+             getWorld()->playSound(SOUND_BACTERIUM_BORN);
+             decrECOLI();
+        }
+            
+        else if(b>0)
+        {
+            getWorld()->addNewActor(new Salmonella(getWorld(), getX(), getY()));
+           getWorld()->playSound(SOUND_BACTERIUM_BORN);
+           decrSalmonella();
+        }
+                    
+        else if(c>0)
+        {
+            getWorld()->addNewActor(new AggroSalmonella(getWorld(), getX(),getY()));
+           getWorld()->playSound(SOUND_BACTERIUM_BORN);
+           decrAggroSalmonella();
+        }
+
     }
 
 }
@@ -566,6 +645,7 @@ void Spray::doSomething()
     else if(getWorld()->typeOfSprayHit(this) == 2)
     {
        setAlive(false);
+
        return;
     }
     
@@ -598,12 +678,14 @@ void FlameThrower::doSomething()
       
     if(getWorld()->typeOfFlameHit(this) == 1)
     {
+
        setAlive(false);
        return;
     }
     
     else if(getWorld()->typeOfFlameHit(this) == 2)
     {
+
        setAlive(false);
        return;
     }
@@ -653,6 +735,7 @@ Bacteria::Bacteria(StudentWorld* studentWorld, double x, double y, int ID):Actor
 {
     movement_planDistance = 0;
     food_eaten = 0;
+    setHealth(0);
 }
 
 bool Bacteria::canOverlap()
@@ -730,17 +813,294 @@ void Salmonella::doSomething()
     if(getMovementPlanDistance() > 0)
     {
         setMovementPlanDistance(getMovementPlanDistance() - 1);
+        
+        if(!getWorld()->isMovementBlocked(this))
+        {
+            moveForward(3);
+        }
+        else
+        {
+            setDirection(randInt(0, 359));
+            setMovementPlanDistance(10);
+        }
+        return;
+
     }
     
+    else if(!getWorld()->isNearbyFood(this))
+    {
+        setDirection(randInt(0, 359));
+        setMovementPlanDistance(10);
+        return;
+    }
     
+    else if(getWorld()->isNearbyFood(this))
+    {
+       if(!getWorld()->isMovementBlocked(this))
+        {
+            moveForward(3);
+        }
+        else
+        {
+            setDirection(randInt(0, 359));
+            setMovementPlanDistance(10);
+        }
+        return;
+        
+    }
 }
 
 Salmonella::~Salmonella()
 {
-    
-      
 }
 
+AggroSalmonella::AggroSalmonella(StudentWorld* studentWorld, double x, double y): Bacteria(studentWorld, x, y, IID_SALMONELLA)
+{
+    setHealth(10);
+}
+
+AggroSalmonella::~AggroSalmonella()
+{
+
+}
+
+void AggroSalmonella::doSomething()
+{
+    //step 1
+    
+    if(!isAlive())
+       {
+           return;
+       }
+    
+    if(getWorld()->isNearbySocrates(this)) //step 2: does steps 3 - 5 after, then returns immediately
+    {
+//step 2 continued
+        if(getWorld()->isMovementBlockedByCircle(this))
+        {
+            setDirection(randInt(0, 359));
+            setMovementPlanDistance(10);
+        }
+        
+        else if(!(getWorld()->isMovementBlockedByDirt(this)))
+        {
+            moveForward(3);
+        }
+        
+        //step 3
+        
+        if(getWorld()->euclidean(getX(), getWorld()->getSocratesX(), getY(),  getWorld()->getSocratesY()) <= 2 * SPRITE_RADIUS)
+            {
+                getWorld()->damageSocrates(2);
+            }
+        
+        
+        if(getFoodEaten()== 3) //step 4
+        {
+            double newX = getX();
+            double newY = getY();
+            if(getX() < VIEW_WIDTH/2)
+            {
+                newX += (SPRITE_WIDTH / 2);
+            }
+           
+            else if(getX() > VIEW_WIDTH/2)
+            {
+                newX -= (SPRITE_WIDTH / 2);
+            }
+            
+            if(getY() < VIEW_HEIGHT/2)
+                   {
+                       newY += (SPRITE_WIDTH / 2);
+                   }
+            
+            else if(getY() > VIEW_HEIGHT/2)
+                 {
+                     newY -= (SPRITE_WIDTH / 2);
+                 }
+            
+            getWorld()->addNewActor(new AggroSalmonella(getWorld(), newX, newY));
+            setFoodEaten(0);
+        }
+        
+        if(getWorld()->overlapsFood(this)) //step 5
+              {
+                  setFoodEaten(getFoodEaten() + 1);
+              }
+        
+        return;
+        
+    }
+     
+    else //if step 2 failed, step 3
+    {
+        //step 3
+        if(getWorld()->euclidean(getX(), getWorld()->getSocratesX(), getY(), getWorld()->getSocratesY()) <= 2 * SPRITE_RADIUS)
+            {
+                getWorld()->damageSocrates(2);
+                
+        //skips to step 6 if step 3 succeeds
+              if(getMovementPlanDistance() > 0)
+               {
+                   setMovementPlanDistance(getMovementPlanDistance() - 1);
+                   
+                   if(!getWorld()->isMovementBlocked(this))
+                   {
+                       moveForward(3);
+                   }
+                   else
+                   {
+                       setDirection(randInt(0, 359));
+                       setMovementPlanDistance(10);
+                   }
+                   return;
+
+               }
+               
+               else if(!getWorld()->isNearbyFood(this))
+               {
+                   setDirection(randInt(0, 359));
+                   setMovementPlanDistance(10);
+                   return;
+               }
+               
+               else if(getWorld()->isNearbyFood(this))
+               {
+                  if(!getWorld()->isMovementBlocked(this))
+                   {
+                       moveForward(3);
+                   }
+                   else
+                   {
+                       setDirection(randInt(0, 359));
+                       setMovementPlanDistance(10);
+                   }
+                   return;
+                   
+               }
+            }
+        
+        if(getFoodEaten()== 3) //step 4 if step 3 fails
+               {
+                   double newX = getX();
+                   double newY = getY();
+                   if(getX() < VIEW_WIDTH/2)
+                   {
+                       newX += (SPRITE_WIDTH / 2);
+                   }
+                  
+                   else if(getX() > VIEW_WIDTH/2)
+                   {
+                       newX -= (SPRITE_WIDTH / 2);
+                   }
+                   
+                   if(getY() < VIEW_HEIGHT/2)
+                          {
+                              newY += (SPRITE_WIDTH / 2);
+                          }
+                   
+                   else if(getY() > VIEW_HEIGHT/2)
+                        {
+                            newY -= (SPRITE_WIDTH / 2);
+                        }
+                   
+                   getWorld()->addNewActor(new AggroSalmonella(getWorld(), newX, newY));
+                   setFoodEaten(0);
+                 
+                   //skips to step 6 if step 4 suceeds
+                     if(getMovementPlanDistance() > 0)
+                           {
+                               setMovementPlanDistance(getMovementPlanDistance() - 1);
+                               
+                               if(!getWorld()->isMovementBlocked(this))
+                               {
+                                   moveForward(3);
+                               }
+                               else
+                               {
+                                   setDirection(randInt(0, 359));
+                                   setMovementPlanDistance(10);
+                               }
+                               return;
+
+                           }
+                           
+                           else if(!getWorld()->isNearbyFood(this))
+                           {
+                               setDirection(randInt(0, 359));
+                               setMovementPlanDistance(10);
+                               return;
+                           }
+                           
+                           else if(getWorld()->isNearbyFood(this))
+                           {
+                              if(!getWorld()->isMovementBlocked(this))
+                               {
+                                   moveForward(3);
+                               }
+                               else
+                               {
+                                   setDirection(randInt(0, 359));
+                                   setMovementPlanDistance(10);
+                               }
+                               return;
+                               
+                           }
+
+                   
+               }
+               
+        if(getWorld()->overlapsFood(this)) //step 5
+             {
+                 setFoodEaten(getFoodEaten() + 1);
+             }
+               
+        if(getMovementPlanDistance() > 0) //step 6
+          {
+              setMovementPlanDistance(getMovementPlanDistance() - 1);
+              
+              if(!getWorld()->isMovementBlocked(this))
+              {
+                  moveForward(3);
+              }
+              else
+              {
+                  setDirection(randInt(0, 359));
+                  setMovementPlanDistance(10);
+              }
+              return;
+
+          }
+      
+      else if(!getWorld()->isNearbyFood(this)) //step  7
+      {
+          setDirection(randInt(0, 359));
+          setMovementPlanDistance(10);
+          return;
+      }
+      
+      else if(getWorld()->isNearbyFood(this))
+      {
+         if(!getWorld()->isMovementBlocked(this))
+          {
+              moveForward(3);
+          }
+          else
+          {
+              setDirection(randInt(0, 359));
+              setMovementPlanDistance(10);
+          }
+          return;
+          
+      }
+        
+    }
+
+    
+    
+    
+    
+}
 
 
 
