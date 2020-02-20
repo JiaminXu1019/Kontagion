@@ -6,6 +6,7 @@
 
 class Actor;
 class Socrates;
+class Bacteria;
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 
 class StudentWorld : public GameWorld
@@ -20,6 +21,10 @@ public:
     void damageSocrates(int x);
     void restoreHealth();
     void addFlames();
+    void damageBacteria(int x, Bacteria* bacteria);
+    int typeOfSprayHit(Actor* actor);
+    int typeOfFlameHit(Actor* actor);
+    bool overlapsFood(Actor* actor);
 
 
     void addNewActor(Actor* actor);

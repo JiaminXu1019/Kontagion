@@ -23,8 +23,14 @@ public:
        virtual ~Actor();
         bool isHitable() const;
         virtual bool canOverlap() = 0;
+        virtual bool hasHP() = 0;
+        void changeHealth(int health);
+           void setHealth(int health);
+           int getHealth() const;
+
 
 private:
+        int m_health;
         bool m_alive;
         bool m_hitable;
         StudentWorld* m_studentWorld;
@@ -39,14 +45,12 @@ class Socrates: public Actor
             virtual void doSomething();
             void changeSprayCharge(int num);
             void changeFlameCharge(int num);
-            void changeHealth(int health);
-            void setHealth(int health);
-            int getHealth() const;
             virtual bool canOverlap();
+            int getSprays() const;
+            int getFlames() const;
+            virtual bool hasHP();
 
-    
         private:
-            int m_health;
             int sprayCharges;
             int flameCharges;
             int positionalAngle;
@@ -56,10 +60,12 @@ class Socrates: public Actor
 class Stationary: public Actor //dirt and food objects
 {
     public:
-        Stationary(int imageID, StudentWorld* studentWorld, int x, int y, bool hitable);
-        virtual ~Stationary();
-        virtual void doSomething();
-        virtual bool canOverlap();
+        Stationary(int imageID, StudentWorld* studentWorld, double x, double y, bool hitable, int direction);
+            virtual ~Stationary();
+            virtual void doSomething();
+            virtual bool canOverlap();
+            virtual bool hasHP();
+
 
     private:
 
@@ -68,9 +74,10 @@ class Stationary: public Actor //dirt and food objects
 class Dirt: public Stationary
 {
     public:
-        Dirt(StudentWorld* studentWorld, int x, int y);
+        Dirt(StudentWorld* studentWorld, double x, double y);
         virtual ~Dirt();
         virtual bool canOverlap();
+
         
     private:
 
@@ -79,12 +86,12 @@ class Dirt: public Stationary
 class Food: public Stationary
 {
     public:
-        Food(StudentWorld* studentWorld, int x, int y);
+        Food(StudentWorld* studentWorld, double x, double y);
         virtual ~Food();
         virtual bool canOverlap();
 
-    private:
 
+    private:
 
 };
 
@@ -92,7 +99,7 @@ class Food: public Stationary
 class Pit: public Actor
 {
     public:
-        Pit(StudentWorld* studentWorld, int x, int y);
+        Pit(StudentWorld* studentWorld, double x, double y);
         virtual ~Pit();
         virtual void doSomething();
         void decrSalmonella();
@@ -100,6 +107,8 @@ class Pit: public Actor
         void decrECOLI();
         bool isEmpty() const;
         virtual bool canOverlap();
+        virtual bool hasHP();
+
     
     private:
         int m_salmonella;
@@ -113,13 +122,15 @@ class Pit: public Actor
 class Goodie: public Actor
 {
     public:
-    Goodie(StudentWorld* studentWorld, int x, int y, int ID);
+    Goodie(StudentWorld* studentWorld, double x, double y, int ID);
 
-        virtual void doSomething() = 0;
+        virtual void doSomething()=0;
         virtual bool canOverlap();
         virtual ~Goodie();
         void decrLifetime();
         int getLifetime() const;
+        virtual bool hasHP();
+
 
     private:
         int lifetime;
@@ -128,7 +139,7 @@ class Goodie: public Actor
 class Fungus: public Goodie
 {
     public:
-        Fungus(StudentWorld* studentWorld, int x, int y);
+        Fungus(StudentWorld* studentWorld, double x, double y);
         virtual void doSomething();
         virtual ~Fungus();
 
@@ -139,7 +150,7 @@ class Fungus: public Goodie
 class RestoreHealthItem: public Goodie
 {
     public:
-        RestoreHealthItem(StudentWorld* studentWorld, int x, int y);
+        RestoreHealthItem(StudentWorld* studentWorld, double x, double y);
          virtual void doSomething();
          virtual ~RestoreHealthItem();
         
@@ -149,17 +160,17 @@ class RestoreHealthItem: public Goodie
 class AddLifeItem: public Goodie
 {
     public:
-        AddLifeItem(StudentWorld* studentWorld, int x, int y);
+        AddLifeItem(StudentWorld* studentWorld, double x, double y);
             virtual void doSomething();
             virtual ~AddLifeItem();
-        
+            
     private:
 };
 
 class AddFlameThrowerItem: public Goodie
 {
     public:
-        AddFlameThrowerItem(StudentWorld* studentWorld, int x, int y);
+        AddFlameThrowerItem(StudentWorld* studentWorld, double x, double y);
               virtual void doSomething();
               virtual ~AddFlameThrowerItem();
         
@@ -167,19 +178,77 @@ class AddFlameThrowerItem: public Goodie
 };
 
 
+class Projectile: public Actor
+{
+    public:
+            Projectile(StudentWorld* studentWorld, double x, double y, int direction, int ID);
+           virtual void doSomething()=0;
+           virtual bool canOverlap();
+           virtual ~Projectile();
+            void setMaxTravel(int x);
+            virtual bool hasHP();
+            int getDistanceTraveled() const;
+            void addDistanceTraveled();
+
+        
+    private:
+        int max_travel_distance;
+        int distance_traveled;
+
+};
+
+class Spray: public Projectile
+{
+    public:
+            Spray(StudentWorld* studentWorld, double x, double y, int direction);
+            virtual void doSomething();
+            virtual ~Spray();
+           
+    private:
+    
+};
+
+class FlameThrower: public Projectile
+{
+    public:
+     FlameThrower(StudentWorld* studentWorld, double x, double y, int direction);
+        virtual void doSomething();
+             virtual ~FlameThrower();
+           
+    private:
+    
+};
+
 class Bacteria: public Actor
 {
     public:
+        Bacteria(StudentWorld* studentWorld, double x, double y, int ID);
+        virtual void doSomething() = 0;
+        virtual bool hasHP();
+        virtual ~Bacteria();
+        void setFoodEaten(int x);
+        int getFoodEaten() const;
+        virtual bool canOverlap();
+        int getMovementPlanDistance() const;
+        void setMovementPlanDistance(int x);
+
+
+
         
     private:
-      int m_health;
-    
+        int food_eaten;
+        int movement_planDistance;
+
 };
 
 class Salmonella: public Bacteria
 {
     public:
-        
+        Salmonella(StudentWorld* studentWorld, double x, double y);
+        virtual void doSomething();
+        virtual ~Salmonella();
+
+    
     private:
 };
 
@@ -200,28 +269,7 @@ class Ecoli: public Bacteria
     
 };
 
-class Projectile: public Actor
-{
-    public:
-        
-    private:
-};
 
-class Spray: public Projectile
-{
-    public:
-           
-    private:
-    
-};
-
-class FlameThrower: public Projectile
-{
-    public:
-           
-    private:
-    
-};
 
 
 
