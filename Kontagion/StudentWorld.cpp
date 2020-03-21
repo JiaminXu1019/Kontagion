@@ -25,6 +25,7 @@ StudentWorld::StudentWorld(string assetPath)
 {
     m_actors = 0;
     m_bacteria = 0;
+    bacteriaKilled = 0;
 
 }
 
@@ -163,20 +164,20 @@ int StudentWorld::move()
          it++;
      }
     
-    if (!(m_Socrates->isAlive()))
+    if (!(m_Socrates->isAlive())) //is socrates alive
     {
           decLives();
             playSound(SOUND_PLAYER_DIE);
           return GWSTATUS_PLAYER_DIED;
     }
     
-    /*
-      if (m_bacteria == bacteriaKilled)
+    
+      if (m_bacteria == bacteriaKilled) //has the level been complete
       {
           playSound(SOUND_FINISHED_LEVEL);
           return GWSTATUS_FINISHED_LEVEL;
       }
-     */
+     
     
     vector<Actor*>::iterator it1; //deletes memory of dead actors
     it1 = actors.begin();
@@ -238,7 +239,7 @@ int StudentWorld::move()
           y2 += VIEW_HEIGHT/2;
           int z = randInt(1,10);
           {
-              if(z <= 6)
+              if(z <= 6) //60% for a restorehealth
               {
                   vector<Actor*>::iterator it3; //ensures no fungus spawns on another fungus
                   it3 = actors.begin();
@@ -262,7 +263,7 @@ int StudentWorld::move()
 
               }
               
-              else if(z > 6 && z <= 9)
+              else if(z > 6 && z <= 9) //30% chance for an addflames
               {
                   vector<Actor*>::iterator it3;
                   it3 = actors.begin();
@@ -287,7 +288,7 @@ int StudentWorld::move()
 
               }
               
-              else
+              else //10% chance for an add life item
               {
                   vector<Actor*>::iterator it3;
                   it3 = actors.begin();
@@ -313,15 +314,25 @@ int StudentWorld::move()
                 
           }
       }
-    
+    //updates the header stats of the game
       ostringstream oss;
+      oss.fill('0');
       oss.setf(ios::fixed);
       oss.precision(0);
-      oss << "Score: " << getScore() << "  ";
+      if(getScore() >= 0 )
+      {
+          oss << "Score: " << setw(6) << getScore() << "  ";
+      }
+    
+      else
+      {
+          oss << "Score: -" << setw(5) << getScore() * -1
+          << "  ";
+      }
       oss << "Level: " << getLevel() << "  ";
       oss << "Lives: " << getLives() << "  ";
-      oss << "Health: " << (m_Socrates->getHealth())<< "  ";;
-      oss << "Sprays: " << m_Socrates->getSprays()<< "  ";;
+      oss << "Health: " << setw(2) << (m_Socrates->getHealth())<< "  ";;
+      oss << "Sprays: " << setw(2) << m_Socrates->getSprays()<< "  ";;
       oss << "Flames: " << m_Socrates->getFlames();
       setGameStatText(oss.str());
 
@@ -350,7 +361,6 @@ void StudentWorld::cleanUp()
     m_actors = 0;
     m_bacteria = 0;
     bacteriaKilled = 0;
-    
     
 }
 
@@ -397,19 +407,6 @@ void StudentWorld::addBacteria(int x)
     m_bacteria += x;
 }
 
-/*void StudentWorld::damageBacteria(int x, Bacteria* bacteria)
-{
-    bacteria->changeHealth(-x);
-    playSound(SOUND_SALMONELLA_HURT);
-
-    
-    if(bacteria->getHealth() <= 0)
-    {
-        bacteria->setAlive(false);
-        playSound(SOUND_SALMONELLA_DIE);
-
-    }
-}*/
 
 void StudentWorld::restoreHealth()
 {
@@ -422,37 +419,49 @@ void StudentWorld::addFlames()
 }
 
 
-
-
 int StudentWorld::typeOfSprayHit(Actor* actor)
 {
-    vector<Actor*>::iterator it;
+    vector<Actor*>::iterator it; //iteratest through all actors
       it = actors.begin();
+    int z = 0;
       while (it!= actors.end())
       {
+          //did the  spray hit a goodie or dirt, if so instant  kill it
           if((*it)->isHitable() && (!(*it)->hasHP()) && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
           {
               (*it)->setAlive(false);
               return 1;
           }
           
-          else if ((*it)->isAlive() && (*it)->isHitable() && ((*it)->hasHP()) && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
+          //did the spray hit a  bacteria, if  so decrement its health and check to see if  it should die
+          else if ((*it)->isBacteria()&& (*it)->hasHP() && (*it)->isAlive() && (*it)->getHealth() > 0 && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
           {
-              int x =   (*it)->getX();
-            int y =   (*it)->getY();
+              int x =  (*it)->getX();
+              int y = (*it)->getY();
               (*it)->changeHealth(-2);
-
+        
               if(!((*it)->isAlive()))
               {
                   increaseBacteriaKilled();
-                  playSound(SOUND_SALMONELLA_DIE);
+                  if(!(*it)->isEcoli())
+                     {
+                         playSound(SOUND_SALMONELLA_DIE);
+                     }
+                  
+                    else
+                     {
+                         playSound(SOUND_ECOLI_DIE);
+                     }
+       
+                  
                   increaseScore(100);
-
-                  int z = randInt(1, 2);
-                  if(z == 1)
-                  {
-                      addNewActor(new Food(this, x, y));
-                  }
+                  z = randInt(1, 2);
+                  if(z==1)
+                    {
+                        //50% chance of a new food object
+                        addNewActor(new Food(this, x, y));
+                        return 2;
+                    }
               }
               else
               {
@@ -476,41 +485,54 @@ int StudentWorld::typeOfFlameHit(Actor* actor)
 {
     vector<Actor*>::iterator it;
       it = actors.begin();
+
       while (it!= actors.end())
-      {//if dirt, goodies, etc...
+      {//if dirt, goodies, etc... hit
+          int z = 0;
           if((*it)->isHitable() && (!(*it)->hasHP()) && euclidean(actor->getX(),  (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
           {
               (*it)->setAlive(false);
               return 1;
           }
           
-          // if bacteria
-          else if ((*it)->isAlive() && (*it)->isHitable() && ((*it)->hasHP()) && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
+          // if salmonella or aggro salmonella hit,decrement health
+          else if ((*it)->isBacteria() && (*it)->hasHP() && (*it)->isAlive() && (*it)->getHealth() > 0 && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
           {
               int x =   (*it)->getX();
               int y =   (*it)->getY();
               (*it)->changeHealth(-5);
-              
+          
               if(!((*it)->isAlive()))
                {
                    increaseBacteriaKilled();
-                   playSound(SOUND_SALMONELLA_DIE);
-                   increaseScore(100);
-
-                   int z = randInt(1, 2);
-                   if(z==1)
+                   if(!(*it)->isEcoli())
                    {
-                       addNewActor(new Food(this, x, y));
+                       playSound(SOUND_SALMONELLA_DIE);
                    }
+                   else
+                   {
+                       playSound(SOUND_ECOLI_DIE);
+                   }
+               
+                   increaseScore(100);
+                   z = randInt(1, 2);
+                   if(z==1)
+                    {
+                        //50% chance of a new food object
+                        addNewActor(new Food(this, x, y));
+                        return 2;
+                    }
+                 
                }
                
                else
                {
                    playSound(SOUND_SALMONELLA_HURT);
                }
-              
+
               return 2;
           }
+          
           
           //did not hit that actor
           else
@@ -528,7 +550,7 @@ bool StudentWorld::overlapsFood(Actor *actor)
     vector<Actor*>::iterator it;
     it = actors.begin();
     while (it!= actors.end())
-    {//if food
+    {//if food  is overlapping with this actor
         if(!((*it)->isHitable()) && (*it)->getDirection() == 90 && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 2 * SPRITE_RADIUS)
         {
             (*it)->setAlive(false);
@@ -544,7 +566,7 @@ bool StudentWorld::overlapsFood(Actor *actor)
 bool StudentWorld::isMovementBlocked(Actor *actor)
 {
 
-    for(int i = 1; i < 4; i ++)
+    for(int i = 1; i < 4; i ++) //checks if  movement blocked by the outside of the circle
     {
         double x;
           double y;
@@ -555,7 +577,7 @@ bool StudentWorld::isMovementBlocked(Actor *actor)
                }
     }
     
-    for(int i = 1; i < 4; i ++)
+    for(int i = 1; i < 4; i ++)  //checks  if movement is blocked  by dirt
       {
            double x;
             double y;
@@ -565,7 +587,7 @@ bool StudentWorld::isMovementBlocked(Actor *actor)
         while (it!= actors.end())
         {
             //if its dirt in the way
-            if(((*it)->isHitable()) && (*it)->getDirection() == 0 && euclidean(x, (*it)->getX(), y, (*it)->getY()) <= SPRITE_RADIUS/2)
+            if(((*it)->isHitable()) && !((*it)->isGoodie()) && !((*it)->isBacteria()) && (*it)->getDirection() == 0 && euclidean(x, (*it)->getX(), y, (*it)->getY()) <= SPRITE_WIDTH/2)
             {
                 return true;
                 
@@ -579,7 +601,7 @@ bool StudentWorld::isMovementBlocked(Actor *actor)
 bool StudentWorld::isMovementBlockedByDirt(Actor *actor)
 {
     
-    for(int i = 1; i < 4; i ++)
+    for(int i = 1; i < 4; i ++) //checks  if movement is blocked  by dirt
       {
            double x;
             double y;
@@ -589,7 +611,7 @@ bool StudentWorld::isMovementBlockedByDirt(Actor *actor)
         while (it!= actors.end())
         {
             //if its dirt in the way
-            if(((*it)->isHitable()) && (*it)->getDirection() == 0 && euclidean(x, (*it)->getX(), y, (*it)->getY()) <= SPRITE_RADIUS/2)
+            if(((*it)->isHitable()) && !((*it)->isGoodie()) && !((*it)->isBacteria()) && (*it)->getDirection() == 0 && euclidean(x, (*it)->getX(), y, (*it)->getY()) <= SPRITE_WIDTH/2)
             {
                 return true;
                 
@@ -603,7 +625,7 @@ bool StudentWorld::isMovementBlockedByDirt(Actor *actor)
 bool StudentWorld::isMovementBlockedByCircle(Actor *actor)
 {
 
-    for(int i = 1; i < 4; i ++)
+    for(int i = 1; i < 4; i ++) //is movement blocked by the outside of the circle
     {
         double x;
           double y;
@@ -625,7 +647,7 @@ bool StudentWorld::isNearbyFood(Actor *actor)
     it = actors.begin();
     while (it!= actors.end())
     {//if food within 128 pixels
-        if(!((*it)->isHitable()) && (*it)->getDirection() == 90 && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 128)
+        if((*it)->isFood() && !((*it)->isHitable()) && (*it)->getDirection() == 90 && euclidean(actor->getX(), (*it)->getX(), actor->getY(), (*it)->getY()) <= 128)
         {
             //sets the new direction of the bacteria to chase the food
             //TODO: ADJUST ARCSIN new direction
@@ -643,7 +665,6 @@ bool StudentWorld::isNearbySocrates(Actor *actor)
  const double PI = 4 * atan(1);
 
     //if Socrates within 72 pixels
-    //TODO: ADJUST ARCSIN new direction
 
         if(euclidean(actor->getX(), getSocratesY(), actor->getY(), getSocratesX()) <= 72)
         {
@@ -654,6 +675,21 @@ bool StudentWorld::isNearbySocrates(Actor *actor)
     return false;
 }
 
+bool StudentWorld::isEcoliNearbySocrates(Actor *actor)
+{
+ const double PI = 4 * atan(1);
+
+    //if Socrates within 72 pixels
+
+        if(euclidean(actor->getX(), getSocratesY(), actor->getY(), getSocratesX()) <= 256)
+        {
+            //sets the new direction of the bacteria to chase Socrates
+              actor->setDirection(int(0.5 + (180/PI) * atan2(getSocratesY() - actor->getY(), getSocratesX() - actor->getX())));
+            return true;
+        }
+    
+    return false;
+}
 
 
 

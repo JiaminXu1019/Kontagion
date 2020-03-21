@@ -6,7 +6,7 @@
 
 
 Actor::Actor(int imageID, double x, double y, int direction, int depth, StudentWorld* studentWorld, bool hitable):
-GraphObject(imageID, x, y, direction)
+GraphObject(imageID, x, y, direction, depth)
 {
     m_studentWorld = studentWorld;
     m_alive = true;
@@ -28,29 +28,48 @@ bool Actor::isHitable() const
     return m_hitable;
 }
 
-void Actor::changeAliveStatus()
-{
-    m_alive = false;
-}
 
 StudentWorld* Actor::getWorld() const
 {
     return m_studentWorld;
 }
 
+bool Actor::isGoodie()
+{
+    return false;
+}
+
+bool Actor::isFood()
+{
+    return false;
+}
+
+bool Actor::isBacteria()
+{
+    return false;
+}
+
+bool Actor::isEcoli()
+{
+    return false;
+}
+
 Actor::~Actor()
 {
 }
 
-void Actor::changeHealth(int health)
+void Actor::changeHealth(int health)  //adjusts health
 {
     if(m_health + health >= 100)
     {
         m_health = 100;
     }
+    
     else if(m_health + health <= 0)
     {
+        m_health = 0;
         setAlive(false);
+   
     }
     else
     {
@@ -86,7 +105,7 @@ bool Socrates::hasHP()
     return true;
 }
 
-bool Socrates::canOverlap()
+bool Socrates::canOverlap() //socrates can overlap with other functions
 {
     return true;
 }
@@ -110,8 +129,6 @@ void Socrates::changeFlameCharge(int num)
     flameCharges += num;
 }
 
-
-
 void Socrates::doSomething()
 {
     if(!isAlive())
@@ -120,8 +137,8 @@ void Socrates::doSomething()
     }
     
     int ch;
-    bool wait = false;
-    if (getWorld()->getKey(ch))
+    bool wait = false; //does socrates need to wait a tick before refreshing his spray charge
+    if (getWorld()->getKey(ch))// checks what key is hit
     {
         double PI = 4 * atan(1);
         
@@ -143,7 +160,7 @@ void Socrates::doSomething()
                     }
                     break;
                     
-                case KEY_PRESS_SPACE:
+                case KEY_PRESS_SPACE: // if space is hit, create a new spray charge a distance away from Socrates in the same direction as him
                 {
                     if(getSprays()==0)
                     {
@@ -161,7 +178,7 @@ void Socrates::doSomething()
                 }
                     break;
                     
-                case KEY_PRESS_ENTER:
+                case KEY_PRESS_ENTER: //if enter is hit create  16 spray charges spaced evenly in a circle around socrates a distance away from him
                   {
                       
                       if(getFlames()==0)
@@ -189,14 +206,14 @@ void Socrates::doSomething()
                 }
             }
    }
-    if(wait)
+    if(wait) // if you need to wait
          {
              wait = !wait;
          }
          
          else
          {
-             if(getSprays()<20)
+             if(getSprays()<20) //refresh spray charges
              {
                  changeSprayCharge(1);
              }
@@ -219,7 +236,7 @@ Stationary::Stationary(int imageID, StudentWorld* studentWorld, double x, double
 
 void Stationary::doSomething()
 {
-    
+    //stationary objects do nothing
 }
 bool Stationary::canOverlap()
 {
@@ -239,10 +256,14 @@ bool Dirt::canOverlap()
     return true;
 }
 
-
 Food::~Food()
 {
 
+}
+
+bool Food::isFood()
+{
+    return true;
 }
 Food::Food(StudentWorld* studentWorld, double x, double y): Stationary(IID_FOOD, studentWorld, x, y, false, 90)
 {
@@ -258,6 +279,7 @@ Pit::Pit(StudentWorld* studentWorld, double x, double y): Actor(IID_PIT, x, y, 0
     m_salmonella = 5;
     m_aggro_salmonella = 3;
     m_e_coli = 2;
+    getWorld()->addBacteria(10); //adds 10 bacteria spawned to the studentworld
 
 }
 
@@ -304,9 +326,9 @@ bool Pit::isEmpty() const
 
 void Pit::doSomething()
 {
+
     if(isEmpty())
     {
-        //getWorld()->addBacteria(10);
         setAlive(false);
     }
     
@@ -329,11 +351,11 @@ void Pit::doSomething()
           {
               c++;
           }
-        if(a >0 && b > 0 && c > 0)
+        if(a >0 && b > 0 && c > 0) // if all exist
         {
             if(randInt(1, 3) == 1) //randomly spawns a bacterium among those that exist
             {
-                //TODO: getWorld()->addNewActor(ECOLI)
+                getWorld()->addNewActor(new Ecoli(getWorld(), getX(), getY()));
                 getWorld()->playSound(SOUND_BACTERIUM_BORN);
                 decrECOLI();
             }
@@ -353,11 +375,11 @@ void Pit::doSomething()
                  }
         }
         
-        else if(a > 0 && b > 0)
+        else if(a > 0 && b > 0) //if no aggro
         {
             if(randInt(1, 2) == 1) //randomly spawns a bacterium among those that exist
             {
-                //TODO: getWorld()->addNewActor(ECOLI)
+                getWorld()->addNewActor(new Ecoli(getWorld(), getX(), getY()));
                 getWorld()->playSound(SOUND_BACTERIUM_BORN);
                 decrECOLI();
             }
@@ -370,11 +392,11 @@ void Pit::doSomething()
                  }
         }
             
-        else if(a>0 && c > 0)
+        else if(a>0 && c > 0)//if no salomnella
         {
             if(randInt(1, 2) == 1) //randomly spawns a bacterium among those that exist
                {
-                   //TODO: getWorld()->addNewActor(ECOLI)
+                   getWorld()->addNewActor(new Ecoli(getWorld(), getX(), getY()));
                    getWorld()->playSound(SOUND_BACTERIUM_BORN);
                    decrECOLI();
                }
@@ -387,7 +409,7 @@ void Pit::doSomething()
                     }
         }
             
-        else if(b>0 && c > 0)
+        else if(b>0 && c > 0) //if no ecoli
         {
             if(randInt(1, 2) == 1) //randomly spawns a bacterium among those that exist
                        {
@@ -404,34 +426,31 @@ void Pit::doSomething()
                 }
         }
             
-        else if(a>0)
+        else if(a>0) //only ecoli left
         {
-        //TODO: getWorld()->addNewActor(ECOLI)
+        getWorld()->addNewActor(new Ecoli(getWorld(), getX(), getY()));
              getWorld()->playSound(SOUND_BACTERIUM_BORN);
              decrECOLI();
         }
             
-        else if(b>0)
+        else if(b>0) //only salmonella left
         {
             getWorld()->addNewActor(new Salmonella(getWorld(), getX(), getY()));
            getWorld()->playSound(SOUND_BACTERIUM_BORN);
            decrSalmonella();
         }
-                    
-        else if(c>0)
+                     
+        else if(c>0) //only aggro left
         {
             getWorld()->addNewActor(new AggroSalmonella(getWorld(), getX(),getY()));
            getWorld()->playSound(SOUND_BACTERIUM_BORN);
            decrAggroSalmonella();
         }
-
     }
-
 }
 
 Goodie::~Goodie()
 {
-    
 }
 
 bool Goodie::hasHP()
@@ -439,12 +458,15 @@ bool Goodie::hasHP()
     return false;
 }
 
-
 Goodie::Goodie(StudentWorld* studentWorld, double x, double y, int ID): Actor(ID, x , y , 0 , 1 , studentWorld, true)
 {
     lifetime = max(rand()%(300 - (10 * studentWorld->getLevel())), 50);
 }
 
+bool Goodie::isGoodie()
+{
+    return true;
+}
 
 bool Goodie::canOverlap()
 {
@@ -468,7 +490,7 @@ void Fungus::doSomething()
     {
         return;
     }
-    
+    //affects Socrates
     if(getWorld()->euclidean(getX(), getWorld()->getSocratesX(), getY(), getWorld()->getSocratesY()) <= 2 * SPRITE_RADIUS)
     {
         getWorld()->increaseScore(-50);
@@ -488,7 +510,6 @@ void Fungus::doSomething()
     
 Fungus::~Fungus()
 {
-    
 }
 
 Fungus::Fungus(StudentWorld* studentWorld, double x, double y): Goodie(studentWorld, x, y, IID_FUNGUS)
@@ -506,7 +527,7 @@ void RestoreHealthItem::doSomething()
        {
            return;
        }
-    
+    //affects Socrates
     if(getWorld()->euclidean(getX(), getWorld()->getSocratesX(), getY(), getWorld()->getSocratesY()) <= 2 * SPRITE_RADIUS)
     {
         getWorld()->increaseScore(250);
@@ -526,7 +547,6 @@ void RestoreHealthItem::doSomething()
 
 RestoreHealthItem::RestoreHealthItem(StudentWorld* studentWorld, double x, double y):Goodie(studentWorld, x, y, IID_RESTORE_HEALTH_GOODIE)
 {
-
 }
 
 AddLifeItem::~AddLifeItem()
@@ -539,7 +559,7 @@ void AddLifeItem::doSomething()
        {
            return;
        }
-    
+    //affects Socrates
     if(getWorld()->euclidean(getX(), getWorld()->getSocratesX(), getY(), getWorld()->getSocratesY()) <= 2 * SPRITE_RADIUS)
     {
         getWorld()->increaseScore(500);
@@ -572,7 +592,7 @@ void AddFlameThrowerItem::doSomething()
        {
            return;
        }
-    
+    //affects Socrates
     if(getWorld()->euclidean(getX(), getWorld()->getSocratesX(), getY(), getWorld()->getSocratesY()) <= 2 * SPRITE_RADIUS)
     {
         getWorld()->increaseScore(300);
@@ -592,10 +612,7 @@ void AddFlameThrowerItem::doSomething()
 
 AddFlameThrowerItem::AddFlameThrowerItem(StudentWorld* studentWorld, double x, double y):Goodie(studentWorld, x, y, IID_FLAME_THROWER_GOODIE)
 {
-
 }
-
-
 
 Projectile::Projectile(StudentWorld* studentWorld, double x, double y, int direction, int ID): Actor(ID, x, y, direction, 1 , studentWorld, false)
 {
@@ -636,19 +653,22 @@ void Spray::doSomething()
           {
               return;
           }
+    //if the spray hit dirt or goodies
+
     if(getWorld()->typeOfSprayHit(this) == 1)
     {
        setAlive(false);
        return;
     }
     
+    //if the spray hit a bacteria
     else if(getWorld()->typeOfSprayHit(this) == 2)
     {
        setAlive(false);
 
        return;
     }
-    
+    //if the spray isn't dead move it along until the max distance is reached
         moveAngle(getDirection(), 2*SPRITE_RADIUS);
     //std::cout<<getDirection()<<endl;
         addDistanceTraveled();
@@ -676,19 +696,24 @@ void FlameThrower::doSomething()
                 return;
             }
       
+      //if the flame hit a dirt or goodie
+
     if(getWorld()->typeOfFlameHit(this) == 1)
     {
 
        setAlive(false);
        return;
     }
-    
+    //if the flame hit a bacteria
+
     else if(getWorld()->typeOfFlameHit(this) == 2)
     {
 
        setAlive(false);
        return;
     }
+    //if the flame isn't dead move it along until the max distance is reached
+
          // moveAngle(getDirection(), 2*SPRITE_RADIUS);
     moveForward(2*SPRITE_RADIUS);
           addDistanceTraveled();
@@ -710,7 +735,13 @@ FlameThrower::~FlameThrower()
 {
 }
 
+
 bool Bacteria::hasHP()
+{
+    return true;
+}
+
+bool Bacteria::isBacteria()
 {
     return true;
 }
@@ -768,12 +799,13 @@ void Salmonella::doSomething()
      {
          return;
      }
-     
+     //if this object overlaps with Socrates
     if(getWorld()->euclidean(getX(), getWorld()->getSocratesX(), getY(), getWorld()->getSocratesY()) <= 2 * SPRITE_RADIUS)
     {
         getWorld()->damageSocrates(1);
     }
      
+    //if enough food has been eaten, duplicate
      else if(getFoodEaten()== 3)
      {
          double newX = getX();
@@ -797,11 +829,11 @@ void Salmonella::doSomething()
               {
                   newY -= (SPRITE_WIDTH / 2);
               }
-         
+         getWorld()->addBacteria(1);
          getWorld()->addNewActor(new Salmonella(getWorld(), newX, newY));
          setFoodEaten(0);
      }
-    
+
     else
     {
         if(getWorld()->overlapsFood(this))
@@ -814,11 +846,11 @@ void Salmonella::doSomething()
     {
         setMovementPlanDistance(getMovementPlanDistance() - 1);
         
-        if(!getWorld()->isMovementBlocked(this))
+        if(!getWorld()->isMovementBlocked(this)) //check if the movement is blocked by dirt or the circle
         {
             moveForward(3);
         }
-        else
+        else //randomize a new direction
         {
             setDirection(randInt(0, 359));
             setMovementPlanDistance(10);
@@ -827,14 +859,14 @@ void Salmonella::doSomething()
 
     }
     
-    else if(!getWorld()->isNearbyFood(this))
+    else if(!getWorld()->isNearbyFood(this)) //if there is no food nearby pick a random direction
     {
         setDirection(randInt(0, 359));
         setMovementPlanDistance(10);
         return;
     }
     
-    else if(getWorld()->isNearbyFood(this))
+    else if(getWorld()->isNearbyFood(this)) //if there is food nearby move towards it
     {
        if(!getWorld()->isMovementBlocked(this))
         {
@@ -919,6 +951,7 @@ void AggroSalmonella::doSomething()
                      newY -= (SPRITE_WIDTH / 2);
                  }
             
+            getWorld()->addBacteria(1);
             getWorld()->addNewActor(new AggroSalmonella(getWorld(), newX, newY));
             setFoodEaten(0);
         }
@@ -1003,7 +1036,7 @@ void AggroSalmonella::doSomething()
                         {
                             newY -= (SPRITE_WIDTH / 2);
                         }
-                   
+                   getWorld()->addBacteria(1);
                    getWorld()->addNewActor(new AggroSalmonella(getWorld(), newX, newY));
                    setFoodEaten(0);
                  
@@ -1046,7 +1079,6 @@ void AggroSalmonella::doSomething()
                                return;
                                
                            }
-
                    
                }
                
@@ -1096,13 +1128,131 @@ void AggroSalmonella::doSomething()
         
     }
 
-    
-    
-    
-    
+}
+
+Ecoli::~Ecoli()
+{
 }
 
 
+Ecoli::Ecoli(StudentWorld* studentWorld, double x, double y): Bacteria(studentWorld, x, y, IID_ECOLI)
+{
+    setHealth(5);
+}
+
+bool Ecoli::isEcoli()
+{
+    return true;
+}
+
+void Ecoli::doSomething()
+{
+    //step 1
+    if(!isAlive())
+         {
+             return;
+         }
+      
+    //step 2
+    if(getWorld()->euclidean(getX(), getWorld()->getSocratesX(), getY(),  getWorld()->getSocratesY()) <= 2 * SPRITE_RADIUS)
+        {
+            getWorld()->damageSocrates(4);
+            
+      if(getWorld()->isEcoliNearbySocrates(this)) //skips to step 5 after
+        {
+          //step 5
+          for(int i = 0; i < 10; i ++)
+          {
+              if(!getWorld()->isMovementBlocked(this))
+              {
+                  moveForward(2);
+                  return;
+              }
+              
+              else
+              {
+                  setDirection(getDirection() + 10);
+              }
+          }
+          
+      }
+}
+    
+    if(getFoodEaten()== 3) //step 3: skip to step 5
+      {
+          double newX = getX();
+          double newY = getY();
+          if(getX() < VIEW_WIDTH/2)
+          {
+              newX += (SPRITE_WIDTH / 2);
+          }
+         
+          else if(getX() > VIEW_WIDTH/2)
+          {
+              newX -= (SPRITE_WIDTH / 2);
+          }
+          
+          if(getY() < VIEW_HEIGHT/2)
+                 {
+                     newY += (SPRITE_WIDTH / 2);
+                 }
+          
+          else if(getY() > VIEW_HEIGHT/2)
+               {
+                   newY -= (SPRITE_WIDTH / 2);
+               }
+          getWorld()->addBacteria(1);
+          getWorld()->addNewActor(new Ecoli(getWorld(), newX, newY));
+          setFoodEaten(0);
+          
+          // step 5
+          if(getWorld()->isEcoliNearbySocrates(this)) //skips to step 5 after
+            {
+              //step 5
+              for(int i = 0; i < 10; i ++)
+              {
+                  if(!getWorld()->isMovementBlocked(this))
+                  {
+                      moveForward(2);
+                      return;
+                  }
+                  
+                  else
+                  {
+                      setDirection(getDirection() + 10);
+                  }
+              }
+              
+          }
+
+      }
+    
+    if(getWorld()->overlapsFood(this)) //step 4
+         {
+             setFoodEaten(getFoodEaten() + 1);
+         }
+    //step 5
+    if(getWorld()->isEcoliNearbySocrates(this))
+      {
+        for(int i = 0; i < 10; i ++)
+        {
+            if(!getWorld()->isMovementBlocked(this))
+            {
+                moveForward(2);
+                return;
+            }
+            
+            else
+            {
+                setDirection(getDirection() + 10);
+            }
+        }
+        
+    }
+
+    
+    
+}
 
 
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp

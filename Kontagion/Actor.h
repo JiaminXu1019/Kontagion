@@ -19,7 +19,6 @@ public:
       StudentWorld* getWorld() const;
        bool isAlive() const;
         void setAlive(bool x);
-       void changeAliveStatus();
        virtual ~Actor();
         bool isHitable() const;
         virtual bool canOverlap() = 0;
@@ -27,6 +26,10 @@ public:
         void changeHealth(int health);
            void setHealth(int health);
            int getHealth() const;
+        virtual bool isGoodie();
+    virtual bool isFood();
+    virtual bool isBacteria();
+    virtual bool isEcoli();
 
 
 private:
@@ -63,10 +66,8 @@ class Stationary: public Actor //dirt and food objects
         Stationary(int imageID, StudentWorld* studentWorld, double x, double y, bool hitable, int direction);
             virtual ~Stationary();
             virtual void doSomething();
-            virtual bool canOverlap();
             virtual bool hasHP();
-
-
+            virtual bool canOverlap();
     private:
 
 };
@@ -89,12 +90,11 @@ class Food: public Stationary
         Food(StudentWorld* studentWorld, double x, double y);
         virtual ~Food();
         virtual bool canOverlap();
-
+        virtual bool isFood();
 
     private:
 
 };
-
 
 class Pit: public Actor
 {
@@ -130,6 +130,7 @@ class Goodie: public Actor
         void decrLifetime();
         int getLifetime() const;
         virtual bool hasHP();
+        virtual bool isGoodie();
 
 
     private:
@@ -231,9 +232,7 @@ class Bacteria: public Actor
         virtual bool canOverlap();
         int getMovementPlanDistance() const;
         void setMovementPlanDistance(int x);
-
-
-
+        virtual bool isBacteria();
         
     private:
         int food_eaten;
@@ -267,7 +266,10 @@ class AggroSalmonella: public Bacteria
 class Ecoli: public Bacteria
 {
     public:
-        
+    Ecoli(StudentWorld* studentWorld, double x, double y);
+              virtual void doSomething();
+              virtual ~Ecoli();
+            virtual bool isEcoli();
     private:
     
 };

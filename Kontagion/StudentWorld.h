@@ -29,18 +29,11 @@ public:
     bool isMovementBlocked(Actor* actor);
     bool isMovementBlockedByDirt(Actor* actor);
     bool isMovementBlockedByCircle(Actor* actor);
-
-
     bool isNearbyFood(Actor* actor);
     bool isNearbySocrates(Actor* actor);
-
-
-
-
+    bool isEcoliNearbySocrates(Actor* actor);
     void addNewActor(Actor* actor);
     ~StudentWorld();
-    
-    
     double euclidean(int x, int x1, int y, int y1);
 
     
