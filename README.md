@@ -3,12 +3,10 @@
 Gameplay Details
 
 In Kontagion, Socrates starts out a new game with three lives and continues to play until
-all of his lives have been exhausted. There are multiple levels in Kontagion, beginning
-with level 1 (NOT zero), and during each level the player (aka Socrates) must cleanse the
-Petri dish of bacteria (including all of the bacteria hidden in the pit(s)) completely before
+all of his lives have been exhausted. There are multiple levels in Kontagion, and the player must completely before
 moving on to the next level/dish.
 
-You, the player, will use the following keystrokes to control Socrates:
+The player will use the following keystrokes to control Socrates:
 • Left arrow key or the ‘a’ key: Moves Socrates counterclockwise
 • Right arrow key or the ‘d’ key: Moves Socrates clockwise
 • Space bar: Fires disinfectant spray if Socrates has spray left
